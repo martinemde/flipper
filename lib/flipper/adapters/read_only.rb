@@ -23,27 +23,15 @@ module Flipper
         @adapter.features
       end
 
-      def get(feature)
-        @adapter.get(feature)
+      def get(key)
+        @adapter.get(key)
       end
 
-      def add(feature)
+      def set(key, value)
         raise WriteAttempted
       end
 
-      def remove(feature)
-        raise WriteAttempted
-      end
-
-      def clear(feature)
-        raise WriteAttempted
-      end
-
-      def enable(feature, gate, thing)
-        raise WriteAttempted
-      end
-
-      def disable(feature, gate, thing)
+      def del(key)
         raise WriteAttempted
       end
     end

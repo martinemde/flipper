@@ -31,47 +31,34 @@ module Flipper
         @operations = operations || []
       end
 
-      # Public: The set of known features.
-      def features
-        @operations << Operation.new(:features, [])
-        @adapter.features
+      def get(key)
+        @operations << Operation.new(:get, [key])
+        @adapter.get(key)
       end
 
-      # Public: Adds a feature to the set of known features.
-      def add(feature)
-        @operations << Operation.new(:add, [feature])
-        @adapter.add(feature)
+      def mget(keys)
+        @operations << Operation.new(:mget, [keys])
+        @adapter.mget(keys)
       end
 
-      # Public: Removes a feature from the set of known features and clears
-      # all the values for the feature.
-      def remove(feature)
-        @operations << Operation.new(:remove, [feature])
-        @adapter.remove(feature)
+      def set(key, value)
+        @operations << Operation.new(:set, [key, value])
+        @adapter.set(key, value)
       end
 
-      # Public: Clears all the gate values for a feature.
-      def clear(feature)
-        @operations << Operation.new(:clear, [feature])
-        @adapter.clear(feature)
+      def mset(kvs)
+        @operations << Operation.new(:mset, [kvs])
+        @adapter.mset(kvs)
       end
 
-      # Public
-      def get(feature)
-        @operations << Operation.new(:get, [feature])
-        @adapter.get(feature)
+      def del(key)
+        @operations << Operation.new(:del, [key])
+        @adapter.del(key)
       end
 
-      # Public
-      def enable(feature, gate, thing)
-        @operations << Operation.new(:enable, [feature, gate, thing])
-        @adapter.enable(feature, gate, thing)
-      end
-
-      # Public
-      def disable(feature, gate, thing)
-        @operations << Operation.new(:disable, [feature, gate, thing])
-        @adapter.disable(feature, gate, thing)
+      def mdel(keys)
+        @operations << Operation.new(:mdel, [keys])
+        @adapter.mdel(keys)
       end
 
       # Public: Count the number of times a certain operation happened.

@@ -1,4 +1,3 @@
-require 'flipper/adapters/instrumented'
 require 'flipper/adapters/memoizable'
 require 'flipper/instrumenters/noop'
 
@@ -16,14 +15,8 @@ module Flipper
     # options - The Hash of options.
     #           :instrumenter - What should be used to instrument all the things.
     def initialize(adapter, options = {})
+      @adapter = Adapters::Memoizable.new(adapter)
       @instrumenter = options.fetch(:instrumenter, Instrumenters::Noop)
-
-      instrumented = Adapters::Instrumented.new(adapter, {
-        :instrumenter => @instrumenter,
-      })
-      memoized = Adapters::Memoizable.new(instrumented)
-      @adapter = memoized
-
       @memoized_features = {}
     end
 
@@ -227,7 +220,7 @@ module Flipper
     #
     # Returns Set of Flipper::Feature instances.
     def features
-      adapter.features.map { |name| feature(name) }.to_set
+      adapter.get("features").to_s.split(Feature::SEPARATOR).map { |name| feature(name) }.to_set
     end
   end
 end

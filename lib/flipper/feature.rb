@@ -41,14 +41,19 @@ module Flipper
     # Returns the result of Adapter#enable.
     def enable(thing = true)
       instrument(:enable) { |payload|
-        adapter.add self
+        sadd("features", key)
 
         gate = gate_for(thing)
         wrapped_thing = gate.wrap(thing)
         payload[:gate_name] = gate.name
         payload[:thing] = wrapped_thing
 
-        adapter.enable self, gate, wrapped_thing
+        case gate.data_type
+        when :integer, :boolean
+          set("feature/#{key}/#{gate.key}", wrapped_thing.value)
+        when :set
+          sadd("feature/#{key}/#{gate.key}", wrapped_thing.value)
+        end
       }
     end
 
@@ -57,17 +62,21 @@ module Flipper
     # Returns the result of Adapter#disable.
     def disable(thing = false)
       instrument(:disable) { |payload|
-        adapter.add self
+        sadd("features", key)
 
         gate = gate_for(thing)
         wrapped_thing = gate.wrap(thing)
         payload[:gate_name] = gate.name
         payload[:thing] = wrapped_thing
 
-        if gate.is_a?(Gates::Boolean)
-          adapter.clear self
-        else
-          adapter.disable self, gate, wrapped_thing
+        case gate.data_type
+        when :boolean
+          keys = gates.map { |gate| "feature/#{key}/#{gate.key}" }
+          mdel(keys)
+        when :integer
+          set("feature/#{key}/#{gate.key}", wrapped_thing.value)
+        when :set
+          srem("feature/#{key}/#{gate.key}", wrapped_thing.value)
         end
       }
     end
@@ -207,7 +216,15 @@ module Flipper
 
     # Public: Returns the raw gate values stored by the adapter.
     def gate_values
-      GateValues.new(adapter.get(self))
+      keys = gates.map { |gate| "feature/#{key}/#{gate.key}" }
+      hash = mget(keys)
+      GateValues.new({
+        :boolean => hash["feature/#{key}/boolean"],
+        :actors => hash["feature/#{key}/actors"].to_s.split(SEPARATOR),
+        :groups => hash["feature/#{key}/groups"].to_s.split(SEPARATOR),
+        :percentage_of_actors => hash["feature/#{key}/percentage_of_actors"],
+        :percentage_of_time => hash["feature/#{key}/percentage_of_time"],
+      })
     end
 
     # Public: Get groups enabled for this feature.
@@ -342,6 +359,58 @@ module Flipper
     end
 
     private
+
+    SEPARATOR = ",".freeze
+
+    def get(key)
+      @adapter.get(key)
+    end
+
+    def set(key, value)
+      @adapter.set(key, value.to_s)
+    end
+
+    def del(key)
+      @adapter.del(key)
+    end
+
+    def mget(keys)
+      @adapter.mget(keys)
+    end
+
+    def mdel(keys)
+      @adapter.mdel(keys)
+    end
+
+    def smembers(key)
+      Set.new(get(key).to_s.split(SEPARATOR))
+    end
+
+    def sadd(key, value)
+      value = value.to_s
+      members = smembers(key)
+
+      if members.include?(value)
+        false
+      else
+        members.add(value)
+        @adapter.set(key, members.to_a.join(SEPARATOR))
+        true
+      end
+    end
+
+    def srem(key, value)
+      value = value.to_s
+      members = smembers(key)
+
+      if members.include?(value)
+        members.delete(value)
+        @adapter.set(key, members.to_a.join(SEPARATOR))
+        true
+      else
+        false
+      end
+    end
 
     # Private: Instrument a feature operation.
     def instrument(operation)

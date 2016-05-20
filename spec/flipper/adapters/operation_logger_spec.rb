@@ -14,8 +14,8 @@ RSpec.describe Flipper::Adapters::OperationLogger do
 
   describe "#get" do
     before do
-      @feature = flipper[:stats]
-      @result = subject.get(@feature)
+      adapter.set("foo", "bar")
+      @result = subject.get("foo")
     end
 
     it "logs operation" do
@@ -23,71 +23,80 @@ RSpec.describe Flipper::Adapters::OperationLogger do
     end
 
     it "returns result" do
-      expect(@result).to eq(adapter.get(@feature))
+      expect(@result).to eq(adapter.get("foo"))
     end
   end
 
-  describe "#enable" do
+  describe "#mget" do
     before do
-      @feature = flipper[:stats]
-      @gate = @feature.gate(:boolean)
-      @thing = flipper.bool
-      @result = subject.enable(@feature, @gate, @thing)
+      adapter.set("foo", "foo_value")
+      adapter.set("bar", "bar_value")
+      @result = subject.mget(["foo", "bar"])
     end
 
     it "logs operation" do
-      expect(subject.count(:enable)).to be(1)
+      expect(subject.count(:mget)).to be(1)
     end
 
     it "returns result" do
-      expect(@result).to eq(adapter.enable(@feature, @gate, @thing))
+      expect(@result).to eq(adapter.mget(["foo", "bar"]))
     end
   end
 
-  describe "#disable" do
+  describe "#set" do
     before do
-      @feature = flipper[:stats]
-      @gate = @feature.gate(:boolean)
-      @thing = flipper.bool
-      @result = subject.disable(@feature, @gate, @thing)
+      @result = subject.set("foo", "bar")
     end
 
     it "logs operation" do
-      expect(subject.count(:disable)).to be(1)
+      expect(subject.count(:set)).to be(1)
     end
 
     it "returns result" do
-      expect(@result).to eq(adapter.disable(@feature, @gate, @thing))
+      expect(@result).to eq(adapter.set("foo", "bar"))
     end
   end
 
-  describe "#features" do
+  describe "#mset" do
     before do
-      flipper[:stats].enable
-      @result = subject.features
+      @result = subject.mset("foo" => "bar")
     end
 
     it "logs operation" do
-      expect(subject.count(:features)).to be(1)
+      expect(subject.count(:mset)).to be(1)
     end
 
     it "returns result" do
-      expect(@result).to eq(adapter.features)
+      expect(@result).to eq(adapter.mset("foo" => "bar"))
     end
   end
 
-  describe "#add" do
+  describe "#del" do
     before do
-      @feature = flipper[:stats]
-      @result = subject.add(@feature)
+      @result = subject.del("foo")
     end
 
     it "logs operation" do
-      expect(subject.count(:add)).to be(1)
+      expect(subject.count(:del)).to be(1)
     end
 
     it "returns result" do
-      expect(@result).to eq(adapter.add(@feature))
+      expect(@result).to eq(adapter.del("foo"))
+    end
+  end
+
+  describe "#mdel" do
+    before do
+      adapter.set("foo", "bar")
+      @result = subject.mdel(["foo"])
+    end
+
+    it "logs operation" do
+      expect(subject.count(:mdel)).to be(1)
+    end
+
+    it "returns result" do
+      expect(@result).to eq(adapter.mdel(["foo"]))
     end
   end
 end

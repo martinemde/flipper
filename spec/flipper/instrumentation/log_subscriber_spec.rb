@@ -36,12 +36,6 @@ RSpec.describe Flipper::Instrumentation::LogSubscriber do
       feature_line = find_line('Flipper feature(search) enabled? false')
       expect(feature_line).to include('[ thing=nil ]')
     end
-
-    it "logs adapter calls" do
-      adapter_line = find_line('Flipper feature(search) adapter(memory) get')
-      expect(adapter_line).to include('[ result={')
-      expect(adapter_line).to include('} ]')
-    end
   end
 
   context "feature enabled checks with a thing" do
@@ -69,23 +63,6 @@ RSpec.describe Flipper::Instrumentation::LogSubscriber do
     it "logs feature calls with result in brackets" do
       feature_line = find_line('Flipper feature(search) enable true')
       expect(feature_line).to include("[ thing=#{user.inspect} gate_name=actor ]")
-    end
-
-    it "logs adapter value" do
-      adapter_line = find_line('Flipper feature(search) adapter(memory) enable')
-      expect(adapter_line).to include("[ result=")
-    end
-  end
-
-  context "getting all the features from the adapter" do
-    before do
-      clear_logs
-      flipper.features
-    end
-
-    it "logs adapter calls" do
-      adapter_line = find_line('Flipper adapter(memory) features')
-      expect(adapter_line).to include('[ result=')
     end
   end
 

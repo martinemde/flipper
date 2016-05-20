@@ -35,15 +35,4 @@ RSpec.describe Flipper::Instrumentation::MetriksSubscriber do
       expect(Metriks.meter("flipper.feature.stats.disabled").count).to be(1)
     end
   end
-
-  it "updates adapter metrics when calls happen" do
-    flipper[:stats].enable(user)
-    expect(Metriks.timer("flipper.adapter.memory.enable").count).to be(1)
-
-    flipper[:stats].enabled?(user)
-    expect(Metriks.timer("flipper.adapter.memory.get").count).to be(1)
-
-    flipper[:stats].disable(user)
-    expect(Metriks.timer("flipper.adapter.memory.disable").count).to be(1)
-  end
 end

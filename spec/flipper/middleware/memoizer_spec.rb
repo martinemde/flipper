@@ -74,13 +74,16 @@ RSpec.describe Flipper::Middleware::Memoizer do
         flipper[:stats].enabled?
         flipper[:stats].enabled?
         flipper[:stats].enabled?
+        flipper[:stats].enabled?
+        flipper[:stats].enabled?
+        flipper[:stats].enabled?
         [200, {}, []]
       }
 
       middleware = described_class.new app, flipper
       middleware.call({})
 
-      expect(adapter.count(:get)).to be(1)
+      expect(adapter.count(:mget)).to be(1)
     end
   end
 

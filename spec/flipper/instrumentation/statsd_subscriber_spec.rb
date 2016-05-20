@@ -54,15 +54,4 @@ RSpec.describe Flipper::Instrumentation::StatsdSubscriber do
       assert_counter 'flipper.feature.stats.disabled'
     end
   end
-
-  it "updates adapter metrics when calls happen" do
-    flipper[:stats].enable(user)
-    assert_timer 'flipper.adapter.memory.enable'
-
-    flipper[:stats].enabled?(user)
-    assert_timer 'flipper.adapter.memory.get'
-
-    flipper[:stats].disable(user)
-    assert_timer 'flipper.adapter.memory.disable'
-  end
 end

@@ -6,8 +6,6 @@ module Flipper
     class Memoizable
       include ::Flipper::Adapter
 
-      FeaturesKey = :flipper_features
-
       # Internal
       attr_reader :cache
 
@@ -25,62 +23,54 @@ module Flipper
         @memoize = false
       end
 
-      # Public
-      def features
+      def get(key)
         if memoizing?
-          cache.fetch(FeaturesKey) {
-            cache[FeaturesKey] = @adapter.features
+          cache.fetch(key) {
+            cache[key] = @adapter.get(key)
           }
         else
-          @adapter.features
+          @adapter.get(key)
         end
       end
 
-      # Public
-      def add(feature)
-        result = @adapter.add(feature)
-        cache.delete(FeaturesKey) if memoizing?
-        result
-      end
-
-      # Public
-      def remove(feature)
-        result = @adapter.remove(feature)
+      def mget(keys)
         if memoizing?
-          cache.delete(FeaturesKey)
-          cache.delete(feature)
-        end
-        result
-      end
+          cached, missing = keys.partition { |key| cache.key?(key) }
+          result = {}
+          cached.each { |key| result[key] = cache[key] }
 
-      # Public
-      def clear(feature)
-        result = @adapter.clear(feature)
-        cache.delete(feature) if memoizing?
-        result
-      end
+          if missing.any?
+            adapter_values = @adapter.mget(missing)
+            adapter_values.each { |key, value|
+              result[key] = value
+              cache[key] = value
+            }
+          end
 
-      # Public
-      def get(feature)
-        if memoizing?
-          cache.fetch(feature) { cache[feature] = @adapter.get(feature) }
+          result
         else
-          @adapter.get(feature)
+          @adapter.mget(keys)
         end
       end
 
-      # Public
-      def enable(feature, gate, thing)
-        result = @adapter.enable(feature, gate, thing)
-        cache.delete(feature) if memoizing?
-        result
+      def set(key, value)
+        cache.delete(key) if memoizing?
+        @adapter.set(key, value)
       end
 
-      # Public
-      def disable(feature, gate, thing)
-        result = @adapter.disable(feature, gate, thing)
-        cache.delete(feature) if memoizing?
-        result
+      def mset(kvs)
+        kvs.each { |key, value| cache.delete(key) } if memoizing?
+        @adapter.mset(kvs)
+      end
+
+      def del(key)
+        cache.delete(key) if memoizing?
+        @adapter.del(key)
+      end
+
+      def mdel(keys)
+        keys.each { |key| cache.delete(key) } if memoizing?
+        @adapter.mdel(keys)
       end
 
       # Internal: Turns local caching on/off.

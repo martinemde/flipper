@@ -39,56 +39,25 @@ RSpec.describe Flipper::Adapters::ReadOnly do
     expect(subject.class.ancestors).to include(Flipper::Adapter)
   end
 
-  it "returns correct default values for the gates if none are enabled" do
-    expect(subject.get(feature)).to eq({
-      :boolean => nil,
-      :groups => Set.new,
-      :actors => Set.new,
-      :percentage_of_actors => nil,
-      :percentage_of_time => nil,
+  it "returns nil for missing key" do
+    expect(subject.get("foo")).to be(nil)
+  end
+
+  it "can get multiple keys" do
+    adapter.set("foo", "1")
+    adapter.set("bar", "2")
+    expect(subject.mget(["foo", "bar", "baz"])).to eq({
+      "foo" => "1",
+      "bar" => "2",
+      "baz" => nil,
     })
   end
 
-  it "can get feature" do
-    actor_22 = actor_class.new('22')
-    adapter.enable(feature, boolean_gate, flipper.boolean)
-    adapter.enable(feature, group_gate, flipper.group(:admins))
-    adapter.enable(feature, actor_gate, flipper.actor(actor_22))
-    adapter.enable(feature, actors_gate, flipper.actors(25))
-    adapter.enable(feature, time_gate, flipper.time(45))
-
-    expect(subject.get(feature)).to eq({
-      :boolean => "true",
-      :groups => Set["admins"],
-      :actors => Set["22"],
-      :percentage_of_actors => "25",
-      :percentage_of_time => "45",
-    })
+  it "raises error on set" do
+    expect { subject.set("foo", "bar") }.to raise_error(Flipper::Adapters::ReadOnly::WriteAttempted)
   end
 
-  it "can get features" do
-    expect(subject.features).to eq(Set.new)
-    adapter.add(feature)
-    expect(subject.features).to eq(Set["stats"])
-  end
-
-  it "raises error on add" do
-    expect { subject.add(feature) }.to raise_error(Flipper::Adapters::ReadOnly::WriteAttempted)
-  end
-
-  it "raises error on remove" do
-    expect { subject.remove(feature) }.to raise_error(Flipper::Adapters::ReadOnly::WriteAttempted)
-  end
-
-  it "raises on clear" do
-    expect { subject.clear(feature) }.to raise_error(Flipper::Adapters::ReadOnly::WriteAttempted)
-  end
-
-  it "raises error on enable" do
-    expect { subject.enable(feature, boolean_gate, flipper.boolean) }.to raise_error(Flipper::Adapters::ReadOnly::WriteAttempted)
-  end
-
-  it "raises error on disable" do
-    expect { subject.disable(feature, boolean_gate, flipper.boolean) }.to raise_error(Flipper::Adapters::ReadOnly::WriteAttempted)
+  it "raises error on del" do
+    expect { subject.del("foo") }.to raise_error(Flipper::Adapters::ReadOnly::WriteAttempted)
   end
 end
