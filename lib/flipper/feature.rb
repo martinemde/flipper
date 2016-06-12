@@ -220,8 +220,8 @@ module Flipper
       hash = mget(keys)
       GateValues.new({
         :boolean => hash["feature/#{key}/boolean"],
-        :actors => hash["feature/#{key}/actors"].to_s.split(SEPARATOR),
-        :groups => hash["feature/#{key}/groups"].to_s.split(SEPARATOR),
+        :actors => @adapter.set_load(hash["feature/#{key}/actors"]),
+        :groups => @adapter.set_load(hash["feature/#{key}/groups"]),
         :percentage_of_actors => hash["feature/#{key}/percentage_of_actors"],
         :percentage_of_time => hash["feature/#{key}/percentage_of_time"],
       })
@@ -360,8 +360,6 @@ module Flipper
 
     private
 
-    SEPARATOR = ",".freeze
-
     def get(key)
       @adapter.get(key)
     end
@@ -383,33 +381,15 @@ module Flipper
     end
 
     def smembers(key)
-      Set.new(get(key).to_s.split(SEPARATOR))
+      @adapter.smembers(key)
     end
 
     def sadd(key, value)
-      value = value.to_s
-      members = smembers(key)
-
-      if members.include?(value)
-        false
-      else
-        members.add(value)
-        @adapter.set(key, members.to_a.join(SEPARATOR))
-        true
-      end
+      @adapter.sadd(key, value)
     end
 
     def srem(key, value)
-      value = value.to_s
-      members = smembers(key)
-
-      if members.include?(value)
-        members.delete(value)
-        @adapter.set(key, members.to_a.join(SEPARATOR))
-        true
-      else
-        false
-      end
+      @adapter.srem(key, value)
     end
 
     # Private: Instrument a feature operation.

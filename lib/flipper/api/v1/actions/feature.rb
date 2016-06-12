@@ -20,7 +20,7 @@ module Flipper
 
           def delete
             feature = flipper[feature_name]
-            flipper.adapter.remove(feature)
+            flipper.adapter.srem("features", feature.key)
             json_response({}, 204)
           end
 
@@ -31,7 +31,7 @@ module Flipper
           end
 
           def feature_names
-            @feature_names ||= Set.new(flipper.adapter.get("features").to_s.split(::Flipper::Feature::SEPARATOR))
+            @feature_names ||= flipper.adapter.smembers("features")
           end
         end
       end

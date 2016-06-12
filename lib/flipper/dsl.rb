@@ -220,7 +220,7 @@ module Flipper
     #
     # Returns Set of Flipper::Feature instances.
     def features
-      adapter.get("features").to_s.split(Feature::SEPARATOR).map { |name| feature(name) }.to_set
+      adapter.smembers("features").map { |name| feature(name) }.to_set
     end
   end
 end

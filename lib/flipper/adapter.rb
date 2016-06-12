@@ -1,6 +1,8 @@
 module Flipper
   module Adapter
-    # adding a module include so we have some hooks for stuff down the road
+    SET_SEPARATOR = ",".freeze
+    SET_SERIALIZER = lambda { |object| object.to_a.join(SET_SEPARATOR) }
+    SET_DESERIALIZER = lambda { |raw| raw.to_s.split(SET_SEPARATOR).to_set }
 
     # Public: Override with data store specific implementation that is
     # more efficient/transactional.
@@ -28,6 +30,54 @@ module Flipper
       keys.each { |key| del(key) }
 
       true
+    end
+
+    # Public: Override with data store specific implementation that is
+    # more efficient/transactional.
+    def smembers(key)
+      set_load(get(key))
+    end
+
+    # Public: Override with data store specific implementation that is
+    # more efficient/transactional.
+    def sadd(key, value)
+      value = value.to_s
+      members = smembers(key)
+
+      if members.include?(value)
+        false
+      else
+        members.add(value)
+        set(key, set_dump(members))
+        true
+      end
+    end
+
+    # Public: Override with data store specific implementation that is
+    # more efficient/transactional.
+    def srem(key, value)
+      value = value.to_s
+      members = smembers(key)
+
+      if members.include?(value)
+        members.delete(value)
+        set(key, set_dump(members))
+        true
+      else
+        false
+      end
+    end
+
+    # Public: Override with data store specific implementation that is
+    # more efficient/transactional.
+    def set_dump(object)
+      SET_SERIALIZER.call(object)
+    end
+
+    # Public: Override with data store specific implementation that is
+    # more efficient/transactional.
+    def set_load(object)
+      SET_DESERIALIZER.call(object)
     end
   end
 end
