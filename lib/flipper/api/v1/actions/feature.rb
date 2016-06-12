@@ -25,13 +25,13 @@ module Flipper
           end
 
           private
-          
+
           def feature_name
             @feature_name ||= Rack::Utils.unescape(path_parts.last)
           end
 
           def feature_names
-            @feature_names ||= flipper.adapter.features
+            @feature_names ||= Set.new(flipper.adapter.get("features").to_s.split(::Flipper::Feature::SEPARATOR))
           end
         end
       end
