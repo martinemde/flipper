@@ -19,10 +19,6 @@ module Flipper
         @name = :read_only
       end
 
-      def features
-        @adapter.features
-      end
-
       def get(key)
         @adapter.get(key)
       end
