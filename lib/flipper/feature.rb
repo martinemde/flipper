@@ -50,9 +50,9 @@ module Flipper
 
         case gate.data_type
         when :integer, :boolean
-          @adapter.set("feature/#{key}/#{gate.key}", wrapped_thing.value)
+          @adapter.set(gate.adapter_key(key), wrapped_thing.value)
         when :set
-          @adapter.sadd("feature/#{key}/#{gate.key}", wrapped_thing.value)
+          @adapter.sadd(gate.adapter_key(key), wrapped_thing.value)
         end
       }
     end
@@ -71,12 +71,12 @@ module Flipper
 
         case gate.data_type
         when :boolean
-          keys = gates.map { |gate| "feature/#{key}/#{gate.key}" }
+          keys = gates.map { |gate| gate.adapter_key(key) }
           @adapter.mdel(keys)
         when :integer
-          @adapter.set("feature/#{key}/#{gate.key}", wrapped_thing.value)
+          @adapter.set(gate.adapter_key(key), wrapped_thing.value)
         when :set
-          @adapter.srem("feature/#{key}/#{gate.key}", wrapped_thing.value)
+          @adapter.srem(gate.adapter_key(key), wrapped_thing.value)
         end
       }
     end
@@ -216,15 +216,13 @@ module Flipper
 
     # Public: Returns the raw gate values stored by the adapter.
     def gate_values
-      keys = gates.map { |gate| "feature/#{key}/#{gate.key}" }
-      hash = @adapter.mget(keys)
-      GateValues.new({
-        :boolean => hash["feature/#{key}/boolean"],
-        :actors => hash["feature/#{key}/actors"],
-        :groups => hash["feature/#{key}/groups"],
-        :percentage_of_actors => hash["feature/#{key}/percentage_of_actors"],
-        :percentage_of_time => hash["feature/#{key}/percentage_of_time"],
-      })
+      keys = gates.map { |gate| gate.adapter_key(key) }
+      adapter_values = @adapter.mget(keys)
+      values = {}
+      gates.each { |gate|
+        values[gate.key] = adapter_values[gate.adapter_key(key)]
+      }
+      GateValues.new(values)
     end
 
     # Public: Get groups enabled for this feature.
