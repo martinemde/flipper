@@ -41,7 +41,7 @@ module Flipper
     # Returns the result of Adapter#enable.
     def enable(thing = true)
       instrument(:enable) { |payload|
-        sadd("features", key)
+        @adapter.sadd("features", key)
 
         gate = gate_for(thing)
         wrapped_thing = gate.wrap(thing)
@@ -50,9 +50,9 @@ module Flipper
 
         case gate.data_type
         when :integer, :boolean
-          set("feature/#{key}/#{gate.key}", wrapped_thing.value)
+          @adapter.set("feature/#{key}/#{gate.key}", wrapped_thing.value)
         when :set
-          sadd("feature/#{key}/#{gate.key}", wrapped_thing.value)
+          @adapter.sadd("feature/#{key}/#{gate.key}", wrapped_thing.value)
         end
       }
     end
@@ -62,7 +62,7 @@ module Flipper
     # Returns the result of Adapter#disable.
     def disable(thing = false)
       instrument(:disable) { |payload|
-        sadd("features", key)
+        @adapter.sadd("features", key)
 
         gate = gate_for(thing)
         wrapped_thing = gate.wrap(thing)
@@ -72,11 +72,11 @@ module Flipper
         case gate.data_type
         when :boolean
           keys = gates.map { |gate| "feature/#{key}/#{gate.key}" }
-          mdel(keys)
+          @adapter.mdel(keys)
         when :integer
-          set("feature/#{key}/#{gate.key}", wrapped_thing.value)
+          @adapter.set("feature/#{key}/#{gate.key}", wrapped_thing.value)
         when :set
-          srem("feature/#{key}/#{gate.key}", wrapped_thing.value)
+          @adapter.srem("feature/#{key}/#{gate.key}", wrapped_thing.value)
         end
       }
     end
@@ -217,7 +217,7 @@ module Flipper
     # Public: Returns the raw gate values stored by the adapter.
     def gate_values
       keys = gates.map { |gate| "feature/#{key}/#{gate.key}" }
-      hash = mget(keys)
+      hash = @adapter.mget(keys)
       GateValues.new({
         :boolean => hash["feature/#{key}/boolean"],
         :actors => hash["feature/#{key}/actors"],
@@ -359,38 +359,6 @@ module Flipper
     end
 
     private
-
-    def get(key)
-      @adapter.get(key)
-    end
-
-    def set(key, value)
-      @adapter.set(key, value.to_s)
-    end
-
-    def del(key)
-      @adapter.del(key)
-    end
-
-    def mget(keys)
-      @adapter.mget(keys)
-    end
-
-    def mdel(keys)
-      @adapter.mdel(keys)
-    end
-
-    def smembers(key)
-      @adapter.smembers(key)
-    end
-
-    def sadd(key, value)
-      @adapter.sadd(key, value)
-    end
-
-    def srem(key, value)
-      @adapter.srem(key, value)
-    end
 
     # Private: Instrument a feature operation.
     def instrument(operation)
