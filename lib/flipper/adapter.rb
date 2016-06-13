@@ -35,7 +35,7 @@ module Flipper
     # Public: Override with data store specific implementation that is
     # more efficient/transactional.
     def smembers(key)
-      set_load(get(key))
+      sload(get(key))
     end
 
     # Public: Override with data store specific implementation that is
@@ -48,7 +48,7 @@ module Flipper
         false
       else
         members.add(value)
-        set(key, set_dump(members))
+        set(key, sdump(members))
         true
       end
     end
@@ -61,7 +61,7 @@ module Flipper
 
       if members.include?(value)
         members.delete(value)
-        set(key, set_dump(members))
+        set(key, sdump(members))
         true
       else
         false
@@ -70,13 +70,13 @@ module Flipper
 
     # Public: Override with data store specific implementation that is
     # more efficient/transactional.
-    def set_dump(object)
+    def sdump(object)
       SET_SERIALIZER.call(object)
     end
 
     # Public: Override with data store specific implementation that is
     # more efficient/transactional.
-    def set_load(object)
+    def sload(object)
       SET_DESERIALIZER.call(object)
     end
   end

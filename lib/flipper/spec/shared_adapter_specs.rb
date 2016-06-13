@@ -112,4 +112,39 @@ shared_examples_for 'a flipper adapter' do
       "baz" => "3",
     })
   end
+
+  it "can add, remove and read set members" do
+    expect(subject.smembers("foo")).to eq(Set.new)
+
+    expect(subject.sadd("foo", "1")).to be(true)
+    expect(subject.smembers("foo")).to eq(Set["1"])
+
+    # read from a different set that should still be empty
+    expect(subject.smembers("bar")).to eq(Set.new)
+
+    expect(subject.sadd("foo", "2")).to be(true)
+    expect(subject.smembers("foo")).to eq(Set["1", "2"])
+
+    expect(subject.sadd("foo", "3")).to be(true)
+    expect(subject.smembers("foo")).to eq(Set["1", "2", "3"])
+
+    expect(subject.srem("foo", "3")).to be(true)
+    expect(subject.smembers("foo")).to eq(Set["1", "2"])
+
+    expect(subject.srem("foo", "2")).to be(true)
+    expect(subject.smembers("foo")).to eq(Set["1"])
+
+    expect(subject.srem("foo", "1")).to be(true)
+    expect(subject.smembers("foo")).to eq(Set.new)
+  end
+
+  it "doesn't add value if already in set" do
+    expect(subject.sadd("foo", "1")).to be(true)
+    expect(subject.sadd("foo", "1")).to be(false)
+    expect(subject.smembers("foo")).to eq(Set["1"])
+  end
+
+  it "doesn't remove value if not in set" do
+    expect(subject.srem("foo", "1")).to be(false)
+  end
 end

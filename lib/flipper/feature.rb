@@ -220,8 +220,8 @@ module Flipper
       hash = mget(keys)
       GateValues.new({
         :boolean => hash["feature/#{key}/boolean"],
-        :actors => @adapter.set_load(hash["feature/#{key}/actors"]),
-        :groups => @adapter.set_load(hash["feature/#{key}/groups"]),
+        :actors => @adapter.sload(hash["feature/#{key}/actors"]),
+        :groups => @adapter.sload(hash["feature/#{key}/groups"]),
         :percentage_of_actors => hash["feature/#{key}/percentage_of_actors"],
         :percentage_of_time => hash["feature/#{key}/percentage_of_time"],
       })
