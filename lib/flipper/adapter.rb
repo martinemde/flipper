@@ -1,6 +1,8 @@
 module Flipper
   module Adapter
     SET_SEPARATOR = ",".freeze
+    SET_PREFIX = "flipper_set:".freeze
+    SET_VALUE_REGEXP = /^#{SET_PREFIX}/
     SET_SERIALIZER = lambda { |object| object.to_a.join(SET_SEPARATOR) }
     SET_DESERIALIZER = lambda { |raw| raw.to_s.split(SET_SEPARATOR).to_set }
 
@@ -9,7 +11,11 @@ module Flipper
     def mget(keys)
       hash = {}
       keys.each do |key|
-        hash[key] = get(key)
+        value = get(key)
+        if value =~ SET_VALUE_REGEXP
+          value = sload(value)
+        end
+        hash[key] = value
       end
       hash
     end
@@ -71,13 +77,13 @@ module Flipper
     # Public: Override with data store specific implementation that is
     # more efficient/transactional.
     def sdump(object)
-      SET_SERIALIZER.call(object)
+      SET_PREFIX + SET_SERIALIZER.call(object)
     end
 
     # Public: Override with data store specific implementation that is
     # more efficient/transactional.
     def sload(object)
-      SET_DESERIALIZER.call(object)
+      SET_DESERIALIZER.call(object.to_s.gsub(SET_VALUE_REGEXP, ""))
     end
   end
 end
