@@ -74,14 +74,12 @@ module Flipper
       end
     end
 
-    # Public: Override with data store specific implementation that is
-    # more efficient/transactional.
+    # Private
     def sdump(object)
       SET_PREFIX + SET_SERIALIZER.call(object)
     end
 
-    # Public: Override with data store specific implementation that is
-    # more efficient/transactional.
+    # Private
     def sload(object)
       SET_DESERIALIZER.call(object.to_s.gsub(SET_VALUE_REGEXP, ""))
     end
